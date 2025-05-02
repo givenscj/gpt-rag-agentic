@@ -3,7 +3,7 @@
 azure-functions
 azurefunctions-extensions-bindings-blob
  
-# azurefunctions-extensions-http-fastapi
+#azurefunctions-extensions-http-fastapi
 # Obtaining azurefunctions-extensions-http-fastapi 1.0.0b3 from github to get pydantic 2.10.1 support
 git+https://github.com/Azure/azure-functions-python-extensions.git@1.0.0b3#egg=azurefunctions-extensions-http-fastapi&subdirectory=azurefunctions-extensions-http-fastapi
 
@@ -18,7 +18,7 @@ azure-storage-blob
 
 # AI and NLP dependencies
 tiktoken==0.7.0
-openai==1.66.3
+openai==1.69.0
 
 # GenAI dependencies
 
