@@ -40,5 +40,6 @@ tenacity==9.0.0
 requests
 python-dotenv
 
+pydantic==2.10.1
 semantic-kernel
 mcp[cli]
