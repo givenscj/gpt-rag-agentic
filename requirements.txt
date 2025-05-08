@@ -15,6 +15,8 @@ azure-identity
 azure-mgmt-web
 azure-mgmt-storage
 azure-storage-blob
+azure.appconfiguration
+azure.appconfiguration.provider
 
 # AI and NLP dependencies
 tiktoken==0.9.0
