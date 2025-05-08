@@ -1,10 +1,12 @@
 from azure.storage.blob import ContainerClient, BlobServiceClient
-from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential
 from azure.core.exceptions import ResourceNotFoundError, AzureError
 from urllib.parse import urlparse, unquote
 import logging
 import os
 import time
+
+from configuration import Configuration
+config = Configuration()
 
 class BlobClient:
     def __init__(self, blob_url, credential=None):
@@ -15,7 +17,7 @@ class BlobClient:
         :param credential: Credential for authentication (optional)
         """
         # 1. Generate the credential in case it is not provided
-        self.credential = self._get_credential(credential)
+        self.credential = config.credential
         self.file_url = blob_url
         self.blob_service_client = None
 
@@ -51,10 +53,7 @@ class BlobClient:
         """
         if credential is None:
             try:
-                credential = ChainedTokenCredential(
-                    ManagedIdentityCredential(),
-                    AzureCliCredential()
-                )
+                credential = config.credential
                 logging.debug("[blob] Initialized ChainedTokenCredential with ManagedIdentityCredential and AzureCliCredential.")
             except Exception as e:
                 logging.error(f"[blob] Failed to initialize ChainedTokenCredential: {e}")
@@ -123,10 +122,7 @@ class BlobContainerClient:
         """
         if credential is None:
             try:
-                credential = ChainedTokenCredential(
-                    ManagedIdentityCredential(),
-                    AzureCliCredential()
-                )
+                credential = config.credential
                 logging.debug("[blob] Initialized ChainedTokenCredential with ManagedIdentityCredential and AzureCliCredential.")
             except Exception as e:
                 logging.error(f"[blob] Failed to initialize ChainedTokenCredential: {e}")
@@ -207,7 +203,7 @@ if __name__ == "__main__":
     # Replace these variables with your actual values
     STORAGE_ACCOUNT_URL = "https://mystorage.blob.core.windows.net"
     CONTAINER_NAME = "mycontainer"
-    CREDENTIAL = os.getenv("AZURE_STORAGE_KEY")  # Or use another method for credentials
+    CREDENTIAL = config.get_value("AZURE_STORAGE_KEY")  # Or use another method for credentials
 
     try:
         # Initialize BlobContainerClient

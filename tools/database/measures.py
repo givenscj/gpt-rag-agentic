@@ -5,9 +5,11 @@ import asyncio
 from typing import Any, Dict, List, Optional, Annotated
 
 import aiohttp
-from azure.identity import ChainedTokenCredential, ManagedIdentityCredential, AzureCliCredential
 
 from .types import MeasuresList, MeasureItem
+
+from configuration import Configuration
+config = Configuration()
 
 # -----------------------------------------------------------------------------
 # Helper function to perform the Azure AI Search query (analogous to tables.py)
@@ -23,10 +25,10 @@ async def _perform_search(body: Dict[str, Any], search_index: str) -> Dict[str, 
     Returns:
         dict: The JSON response from the search service.
     """
-    search_service = os.getenv("AZURE_SEARCH_SERVICE")
+    search_service = config.get_value("AZURE_SEARCH_SERVICE")
     if not search_service:
         raise Exception("AZURE_SEARCH_SERVICE environment variable is not set.")
-    search_api_version = os.getenv("AZURE_SEARCH_API_VERSION", "2024-07-01")
+    search_api_version = config.get_value("AZURE_SEARCH_API_VERSION", "2024-07-01")
 
     # Build the search endpoint URL.
     search_endpoint = (
@@ -36,12 +38,8 @@ async def _perform_search(body: Dict[str, Any], search_index: str) -> Dict[str, 
 
     # Obtain an access token for the search service.
     try:
-        credential = ChainedTokenCredential(
-            ManagedIdentityCredential(),
-            AzureCliCredential()
-        )
         azure_search_scope = "https://search.azure.com/.default"
-        token = credential.get_token(azure_search_scope).token
+        token = config.credential.get_token(azure_search_scope).token
     except Exception as e:
         logging.error("Error obtaining Azure Search token.", exc_info=True)
         raise Exception("Failed to obtain Azure Search token.") from e

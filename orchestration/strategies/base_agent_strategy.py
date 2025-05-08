@@ -3,7 +3,7 @@ import os
 import re
 
 from connectors import AzureOpenAIClient
-from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential, get_bearer_token_provider
+from azure.identity import get_bearer_token_provider
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
 from autogen_core.model_context import BufferedChatCompletionContext
@@ -11,6 +11,8 @@ from autogen_core.models import SystemMessage
 from pydantic import BaseModel
 from ..constants import OutputFormat, OutputMode
 from autogen_agentchat.agents import AssistantAgent
+from configuration import Configuration
+config = Configuration()
 
 # Agent response types
 class ChatGroupResponse(BaseModel):
@@ -20,19 +22,19 @@ class ChatGroupResponse(BaseModel):
 class BaseAgentStrategy:
     def __init__(self):
         # Azure OpenAI model client configuration
-        self.aoai_resource = os.environ.get('AZURE_OPENAI_RESOURCE', 'openai')
-        self.chat_deployment = os.environ.get('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
-        self.model = os.environ.get('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
-        self.api_version = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-10-21')
-        self.max_tokens = int(os.environ.get('AZURE_OPENAI_MAX_TOKENS', 1000))
-        self.temperature = float(os.environ.get('AZURE_OPENAI_TEMPERATURE', 0.7))
+        self.aoai_resource = config.get_value('AZURE_OPENAI_RESOURCE', 'openai')
+        self.chat_deployment = config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
+        self.model = config.get_value('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
+        self.api_version = config.get_value('AZURE_OPENAI_API_VERSION', '2024-10-21')
+        self.max_tokens = int(config.get_value('AZURE_OPENAI_MAX_TOKENS', 1000))
+        self.temperature = float(config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7))
 
         # Autogen agent configuration (base to be overridden)
         self.agents = []
         self.terminate_message = "TERMINATE"
-        self.max_rounds = int(os.getenv('MAX_ROUNDS', 8))
+        self.max_rounds = int(config.get_value('MAX_ROUNDS', 8))
         self.selector_func = None
-        self.context_buffer_size = int(os.getenv('CONTEXT_BUFFER_SIZE', 30))
+        self.context_buffer_size = int(config.get_value('CONTEXT_BUFFER_SIZE', 30))
         self.text_only=False 
         self.optimize_for_audio=False
 
@@ -79,10 +81,8 @@ class BaseAgentStrategy:
         interaction with Azure OpenAI services.
         """
         token_provider = get_bearer_token_provider(
-            ChainedTokenCredential(
-                ManagedIdentityCredential(),
-                AzureCliCredential()
-            ), "https://cognitiveservices.azure.com/.default"
+            config.credential,
+            "https://cognitiveservices.azure.com/.default"
         )
         return AzureOpenAIChatCompletionClient(
             azure_deployment=self.chat_deployment,

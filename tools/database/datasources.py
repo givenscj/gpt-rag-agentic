@@ -1,6 +1,8 @@
 from .types import DataSourcesList, DataSourceItem
 import os
 from connectors import CosmosDBClient
+from configuration import Configuration
+config = Configuration()
 
 async def get_all_datasources_info() -> DataSourcesList:
     """
@@ -9,7 +11,7 @@ async def get_all_datasources_info() -> DataSourcesList:
     """
     # 1. Pull all documents from the `datasources` container.
     cosmosdb = CosmosDBClient()
-    datasources_container = os.environ.get('DATASOURCES_CONTAINER', 'datasources')
+    datasources_container = config.get_value('DATASOURCES_CONTAINER', 'datasources')
     documents = await cosmosdb.list_documents(datasources_container)
 
     datasources_info = []

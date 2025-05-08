@@ -1,9 +1,11 @@
 import os
 import logging
 import re
-from azure.identity.aio import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential
 from azure.keyvault.secrets.aio import SecretClient as AsyncSecretClient
 from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
+
+from configuration import Configuration
+config = Configuration()
 
 ##########################################################
 # KEY VAULT 
@@ -11,15 +13,11 @@ from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationErr
 
 async def get_secret(secretName):
     try:
-        keyVaultName = os.environ["AZURE_KEY_VAULT_NAME"]
+        keyVaultName = config.get_value["AZURE_KEY_VAULT_NAME"]
         KVUri = f"https://{keyVaultName}.vault.azure.net"
-        async with ChainedTokenCredential(
-                ManagedIdentityCredential(),
-                AzureCliCredential()
-            ) as credential:
-            async with AsyncSecretClient(vault_url=KVUri, credential=credential) as client:
-                retrieved_secret = await client.get_secret(secretName)
-                value = retrieved_secret.value
+        async with AsyncSecretClient(vault_url=KVUri, credential=config.credential) as client:
+            retrieved_secret = await client.get_secret(secretName)
+            value = retrieved_secret.value
         return value    
     except KeyError:
         logging.info("Environment variable AZURE_KEY_VAULT_NAME not found.")

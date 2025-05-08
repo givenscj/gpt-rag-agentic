@@ -7,6 +7,9 @@ import warnings
 import azure.functions as func
 from azurefunctions.extensions.http.fastapi import Request, StreamingResponse, JSONResponse
 from orchestration import RequestResponseOrchestrator, StreamingOrchestrator, OrchestratorConfig
+from configuration import Configuration
+
+config = Configuration()
 
 # User Warning configuration
 import warnings
@@ -17,20 +20,20 @@ import warnings
 #   once    - show the warning only once
 #   module  - show the warning only once per module
 #   default - default Python behavior
-user_warning_filter = os.environ.get('USER_WARNING_FILTER', 'ignore').lower()
+user_warning_filter = config.get_value('USER_WARNING_FILTER', 'ignore').lower()
 warnings.filterwarnings(user_warning_filter, category=UserWarning)
 
 # Logging configuration
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper(), force=True)
-logging.getLogger("azure").setLevel(os.environ.get('AZURE_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("httpx").setLevel(os.environ.get('HTTPX_LOGLEVEL', 'ERROR').upper())
-logging.getLogger("httpcore").setLevel(os.environ.get('HTTPCORE_LOGLEVEL', 'ERROR').upper())
-logging.getLogger("openai._base_client").setLevel(os.environ.get('OPENAI_BASE_CLIENT_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("urllib3").setLevel(os.environ.get('URLLIB3_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("urllib3.connectionpool").setLevel(os.environ.get('URLLIB3_CONNECTIONPOOL_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("openai").setLevel(os.environ.get('OPENAI_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("autogen_core").setLevel(os.environ.get('AUTOGEN_CORE_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("autogen_core.events").setLevel(os.environ.get('AUTOGEN_EVENTS_LOGLEVEL', 'WARNING').upper())
+logging.basicConfig(level=config.get_value('LOGLEVEL', 'INFO').upper(), force=True)
+logging.getLogger("azure").setLevel(config.get_value('AZURE_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("httpx").setLevel(config.get_value('HTTPX_LOGLEVEL', 'ERROR').upper())
+logging.getLogger("httpcore").setLevel(config.get_value('HTTPCORE_LOGLEVEL', 'ERROR').upper())
+logging.getLogger("openai._base_client").setLevel(config.get_value('OPENAI_BASE_CLIENT_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("urllib3").setLevel(config.get_value('URLLIB3_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("urllib3.connectionpool").setLevel(config.get_value('URLLIB3_CONNECTIONPOOL_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("openai").setLevel(config.get_value('OPENAI_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("autogen_core").setLevel(config.get_value('AUTOGEN_CORE_LOGLEVEL', 'WARNING').upper())
+logging.getLogger("autogen_core.events").setLevel(config.get_value('AUTOGEN_EVENTS_LOGLEVEL', 'WARNING').upper())
 logging.getLogger("uvicorn.error").propagate = True
 logging.getLogger("uvicorn.access").propagate = True
 

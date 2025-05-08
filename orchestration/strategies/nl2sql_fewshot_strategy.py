@@ -15,6 +15,9 @@ from tools import (
     execute_sql_query,
 )
 
+from configuration import Configuration
+config = Configuration()
+
 # Agents Strategy Class
 
 class NL2SQLFewshotStrategy(NL2SQLBaseStrategy):
@@ -76,7 +79,7 @@ class NL2SQLFewshotStrategy(NL2SQLBaseStrategy):
         
         # Group Chat Configuration
 
-        self.max_rounds = int(os.getenv('MAX_ROUNDS', 20))
+        self.max_rounds = int(config.get_value('MAX_ROUNDS', 20))
 
         def custom_selector_func(messages):
             """

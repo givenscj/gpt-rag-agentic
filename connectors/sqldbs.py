@@ -2,9 +2,11 @@ import asyncio
 import logging
 import pyodbc
 import struct
-from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential
 from connectors.keyvault import get_secret, generate_valid_secret_name
 from connectors.types import SQLDatabaseConfig
+from configuration import Configuration
+
+config = Configuration()
 
 class SQLDBClient:
     """
@@ -46,12 +48,8 @@ class SQLDBClient:
                 raise
         else:
             # Use Azure AD token for authentication via Managed Identity.
-            credential = ChainedTokenCredential(
-                ManagedIdentityCredential(),
-                AzureCliCredential()
-            )
             try:
-                token = credential.get_token("https://database.windows.net/.default")
+                token = config.credential.get_token("https://database.windows.net/.default")
                 token_bytes = token.token.encode("UTF-16-LE")
                 token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
                 SQL_COPT_SS_ACCESS_TOKEN = 1256

@@ -5,10 +5,12 @@ import asyncio
 from typing import Optional, Annotated
 
 import aiohttp
-from azure.identity import ChainedTokenCredential, ManagedIdentityCredential, AzureCliCredential
 from connectors import AzureOpenAIClient
 
 from .types import QueryItem, QueriesRetrievalResult
+from configuration import Configuration
+
+config = Configuration()
 
 
 async def queries_retrieval(
@@ -36,14 +38,14 @@ async def queries_retrieval(
     HYBRID_SEARCH_APPROACH = 'hybrid'
 
     # Read configuration from environment variables
-    search_index = os.getenv('NL2SQL_QUERIES_INDEX', 'nl2sql-queries')
-    search_approach = os.getenv('AZURE_SEARCH_APPROACH', HYBRID_SEARCH_APPROACH)
+    search_index = config.get_value('NL2SQL_QUERIES_INDEX', 'nl2sql-queries')
+    search_approach = config.get_value('AZURE_SEARCH_APPROACH', HYBRID_SEARCH_APPROACH)
     search_top_k = 3
 
-    use_semantic = os.getenv('AZURE_SEARCH_USE_SEMANTIC', "false").lower() == "true"
-    semantic_search_config = os.getenv('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
-    search_service = os.getenv('AZURE_SEARCH_SERVICE')
-    search_api_version = os.getenv('AZURE_SEARCH_API_VERSION', '2024-07-01')
+    use_semantic = config.get_value('AZURE_SEARCH_USE_SEMANTIC', "false").lower() == "true"
+    semantic_search_config = config.get_value('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
+    search_service = config.get_value('AZURE_SEARCH_SERVICE')
+    search_api_version = config.get_value('AZURE_SEARCH_API_VERSION', '2024-07-01')
 
     search_results = []
     search_query = input
@@ -51,11 +53,6 @@ async def queries_retrieval(
 
     try:
         # Create the credential to obtain a token for Azure Search.
-        credential = ChainedTokenCredential(
-            ManagedIdentityCredential(),
-            AzureCliCredential()
-        )
-
         # Generate embeddings asynchronously (using a thread if the SDK is blocking).
         start_time = time.time()
         logging.info(f"[queries_retrieval] Generating question embeddings. Search query: {search_query}")
@@ -64,7 +61,7 @@ async def queries_retrieval(
         logging.info(f"[queries_retrieval] Finished generating question embeddings in {response_time} seconds")
 
         # Obtain the Azure Search token asynchronously.
-        token_response = await asyncio.to_thread(credential.get_token, "https://search.azure.com/.default")
+        token_response = await asyncio.to_thread(config.credential.get_token, "https://search.azure.com/.default")
         azure_search_key = token_response.token
 
         # Prepare the request body for the search query.

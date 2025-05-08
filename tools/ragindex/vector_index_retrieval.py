@@ -8,7 +8,6 @@ from typing import Annotated, Optional, List, Dict, Any
 from urllib.parse import urlparse
 
 import aiohttp
-from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential
 from connectors import AzureOpenAIClient
 
 from .types import (
@@ -16,6 +15,9 @@ from .types import (
     MultimodalVectorIndexRetrievalResult,
     DataPointsResult,
 )
+
+from configuration import Configuration
+config = Configuration()
 
 # -----------------------------------------------------------------------------
 # Helper Functions
@@ -26,12 +28,8 @@ async def _get_azure_search_token() -> str:
     Acquires an Azure Search access token using chained credentials.
     """
     try:
-        credential = ChainedTokenCredential(
-            ManagedIdentityCredential(),
-            AzureCliCredential()
-        )
         # Wrap the synchronous token acquisition in a thread.
-        token_obj = await asyncio.to_thread(credential.get_token, "https://search.azure.com/.default")
+        token_obj = await asyncio.to_thread(config.credential.get_token, "https://search.azure.com/.default")
         return token_obj.token
     except Exception as e:
         logging.error("Error obtaining Azure Search token.", exc_info=True)
@@ -77,13 +75,13 @@ async def vector_index_retrieve(
     wrapped in a Pydantic model. If an error occurs, the 'error' field is populated.
     """
     aoai = AzureOpenAIClient()
-    search_top_k = os.getenv('AZURE_SEARCH_TOP_K', 3)
-    search_approach = os.getenv('AZURE_SEARCH_APPROACH', 'hybrid')
-    semantic_search_config = os.getenv('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
-    search_service = os.getenv('AZURE_SEARCH_SERVICE')
-    search_index = os.getenv('AZURE_SEARCH_INDEX', 'ragindex')
-    search_api_version = os.getenv('AZURE_SEARCH_API_VERSION', '2024-07-01')
-    use_semantic = os.getenv('AZURE_SEARCH_USE_SEMANTIC', 'false').lower() == 'true'
+    search_top_k = config.get_value('AZURE_SEARCH_TOP_K', 3)
+    search_approach = config.get_value('AZURE_SEARCH_APPROACH', 'hybrid')
+    semantic_search_config = config.get_value('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
+    search_service = config.get_value('AZURE_SEARCH_SERVICE')
+    search_index = config.get_value('AZURE_SEARCH_INDEX', 'ragindex')
+    search_api_version = config.get_value('AZURE_SEARCH_API_VERSION', '2024-07-01')
+    use_semantic = config.get_value('AZURE_SEARCH_USE_SEMANTIC', 'false').lower() == 'true'
 
     VECTOR_SEARCH_APPROACH = 'vector'
     TERM_SEARCH_APPROACH = 'term'
@@ -213,13 +211,13 @@ async def multimodal_vector_index_retrieve(
     Returns the results wrapped in a Pydantic model with separate lists for texts and images.
     """
     aoai = AzureOpenAIClient()
-    search_top_k = int(os.getenv('AZURE_SEARCH_TOP_K', 3))
-    search_approach = os.getenv('AZURE_SEARCH_APPROACH', 'vector')  # or 'hybrid'
-    semantic_search_config = os.getenv('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
-    search_service = os.getenv('AZURE_SEARCH_SERVICE')
-    search_index = os.getenv('AZURE_SEARCH_INDEX', 'ragindex')
-    search_api_version = os.getenv('AZURE_SEARCH_API_VERSION', '2024-07-01')
-    use_semantic = os.getenv('AZURE_SEARCH_USE_SEMANTIC', 'false').lower() == 'true'
+    search_top_k = int(config.get_value('AZURE_SEARCH_TOP_K', 3))
+    search_approach = config.get_value('AZURE_SEARCH_APPROACH', 'vector')  # or 'hybrid'
+    semantic_search_config = config.get_value('AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG', 'my-semantic-config')
+    search_service = config.get_value('AZURE_SEARCH_SERVICE')
+    search_index = config.get_value('AZURE_SEARCH_INDEX', 'ragindex')
+    search_api_version = config.get_value('AZURE_SEARCH_API_VERSION', '2024-07-01')
+    use_semantic = config.get_value('AZURE_SEARCH_USE_SEMANTIC', 'false').lower() == 'true'
 
     logging.info(f"[multimodal_vector_index_retrieve] User input: {input}")
 
