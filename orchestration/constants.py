@@ -7,6 +7,8 @@ class Strategy(Enum):
     NL2SQL = 'nl2sql'
     NL2SQL_FEWSHOT = 'nl2sql_fewshot'
     CHAT_WITH_FABRIC = 'chat_with_fabric'
+    MCP = 'mcp'
+    WORKFLOW = 'workflow'
 
 # orchestrator output types
 class OutputFormat(Enum):

@@ -6,6 +6,7 @@ from .strategies.nl2sql_standard_strategy import NL2SQLStandardStrategy
 from .strategies.nl2sql_fewshot_strategy import NL2SQLFewshotStrategy
 # Other Strategies
 from .strategies.chat_with_fabric_strategy import ChatWithFabricStrategy
+from .strategies.mcp_strategy import McpAgentStrategy
 
 from .constants import Strategy
 
@@ -22,6 +23,8 @@ class AgentStrategyFactory:
             return NL2SQLStandardStrategy()
         elif strategy_type == Strategy.NL2SQL_FEWSHOT:
             return NL2SQLFewshotStrategy() 
+        elif strategy_type == Strategy.MCP:
+            return McpAgentStrategy() 
            
         # Add other strategies here as needed.
         # Example: 
