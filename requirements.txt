@@ -41,5 +41,5 @@ requests
 python-dotenv
 
 pydantic==2.10.1
-semantic-kernel
+semantic-kernel==1.29.0
 mcp[cli]
