@@ -40,4 +40,5 @@ tenacity==9.0.0
 requests
 python-dotenv
 
+semantic-kernel
 mcp[cli]
