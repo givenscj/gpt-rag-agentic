@@ -17,16 +17,16 @@ azure-mgmt-storage
 azure-storage-blob
 
 # AI and NLP dependencies
-tiktoken==0.7.0
-openai==1.69.0
+tiktoken==0.9.0
+openai==1.77.0
 
 # GenAI dependencies
 
 # for 0.4 
-autogen-agentchat==0.4.9.2
-autogen_ext==0.4.9.2
+autogen-agentchat==0.5.6
+autogen_ext==0.5.6
 
-aiohttp==3.10.11
+aiohttp==3.11.18
 # asyncio==3.4.3
 
 # NL2SQL dependencies
@@ -39,3 +39,5 @@ tenacity==9.0.0
 # For evaluation
 requests
 python-dotenv
+
+mcp[cli]
