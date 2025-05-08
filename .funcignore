@@ -8,3 +8,5 @@ test
 .venv
 local
 .local
+.env
+local.settings.json
