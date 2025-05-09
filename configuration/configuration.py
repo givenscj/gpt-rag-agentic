@@ -1,6 +1,7 @@
 import os
 import logging
 from azure.identity import DefaultAzureCredential
+from azure.identity.aio import DefaultAzureCredential as AioDefaultAzureCredential
 from azure.appconfiguration.provider import (
     AzureAppConfigurationKeyVaultOptions,
     load
@@ -20,6 +21,17 @@ class Configuration:
             raise e
         
         self.credential = DefaultAzureCredential(
+            additionally_allowed_tenants=self.tenant_id,
+            exclude_environment_credential=True, 
+            exclude_managed_identity_credential=False,
+            exclude_cli_credential=False,
+            exclude_powershell_credential=True,
+            exclude_shared_token_cache_credential=True,
+            exclude_developer_cli_credential=True,
+            exclude_interactive_browser_credential=True
+            )
+
+        self.aio_credential = AioDefaultAzureCredential(
             additionally_allowed_tenants=self.tenant_id,
             exclude_environment_credential=True, 
             exclude_managed_identity_credential=False,

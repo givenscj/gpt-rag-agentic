@@ -37,7 +37,7 @@ class CosmosDBClient:
         """
         Lists all documents from the given container.
         """
-        async with CosmosClient(self.db_uri, credential=config.credential) as db_client:
+        async with CosmosClient(self.db_uri, credential=config.aio_credential) as db_client:
             db = db_client.get_database_client(database=self.db_name)
             container = db.get_container_client(container_name)
 
@@ -53,7 +53,7 @@ class CosmosDBClient:
 
 
     async def get_document(self, container, key) -> dict: 
-        async with CosmosClient(self.db_uri, credential=config.credential) as db_client:
+        async with CosmosClient(self.db_uri, credential=config.aio_credential) as db_client:
             db = db_client.get_database_client(database=self.db_name)
             container = db.get_container_client(container)
             try:
@@ -65,7 +65,7 @@ class CosmosDBClient:
             return document
 
     async def create_document(self, container, key, body=None) -> dict: 
-        async with CosmosClient(self.db_uri, credential=config.credential) as db_client:
+        async with CosmosClient(self.db_uri, credential=config.aio_credential) as db_client:
             db = db_client.get_database_client(database=self.db_name)
             container = db.get_container_client(container)
             try:
@@ -81,7 +81,7 @@ class CosmosDBClient:
             return document
             
     async def update_document(self, container, document) -> dict: 
-        async with CosmosClient(self.db_uri, credential=config.credential) as db_client:
+        async with CosmosClient(self.db_uri, credential=config.aio_credential) as db_client:
             db = db_client.get_database_client(database=self.db_name)
             container = db.get_container_client(container)
             try:
