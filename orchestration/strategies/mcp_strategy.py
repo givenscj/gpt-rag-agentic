@@ -52,7 +52,7 @@ class McpAgentStrategy(BaseAgentStrategy):
 
         headers={"Content-Type": "application/json"},
 
-        if mcp_server_api_key is not None:
+        if mcp_server_api_key is not None and mcp_server_api_key != "":
             headers['Authorization'] = f"Bearer {mcp_server_api_key}"
 
         server_params = SseServerParams(
