@@ -50,7 +50,7 @@ class McpAgentStrategy(BaseAgentStrategy):
         mcp_server_timeout = self.config.get_value("AZURE_MCP_SERVER_TIMEOUT", default=30)
         mcp_server_api_key = self.config.get_value("AZURE_MCP_SERVER_APIKEY", default=None)
 
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json"}
 
         if mcp_server_api_key is not None and mcp_server_api_key != "":
             headers['Authorization'] = f"Bearer {mcp_server_api_key}"
