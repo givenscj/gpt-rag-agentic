@@ -92,7 +92,8 @@ class BaseAgentStrategy:
             api_version=self.api_version,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            response_format=response_format
+            response_format=response_format,
+            #parallel_tool_calls=False
         )
 
     def _get_termination_condition(self):

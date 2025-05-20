@@ -1,10 +1,12 @@
 
 # Azure Functions dependencies
 azure-functions
-azurefunctions-extensions-bindings-blob
- 
+
+#azurefunctions-extensions-bindings-blob
 #azurefunctions-extensions-http-fastapi
-# Obtaining azurefunctions-extensions-http-fastapi 1.0.0b3 from github to get pydantic 2.10.1 support
+# Obtaining azurefunctions-extensions-http-fastapi 1.0.0b4 from github to get pydantic 2.10.5+ support
+git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-base&subdirectory=azurefunctions-extensions-base
+git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-bindings-blob&subdirectory=azurefunctions-extensions-bindings-blob
 git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-http-fastapi&subdirectory=azurefunctions-extensions-http-fastapi
 
 
@@ -25,8 +27,8 @@ openai
 # GenAI dependencies
 
 # for 0.4 
-autogen-agentchat
-autogen_ext
+autogen-agentchat==0.5.7
+autogen_ext==0.5.7
 
 aiohttp==3.11.18
 # asyncio==3.4.3
@@ -42,6 +44,9 @@ tenacity==9.0.0
 requests
 python-dotenv
 
-pydantic
-semantic-kernel
+protobuf==5.29.4
+rpds-py
+
+pydantic==2.11.4
+semantic-kernel==1.30.0
 mcp[cli]

@@ -83,7 +83,7 @@ class McpAgentStrategy(BaseAgentStrategy):
                 model_client=self._get_model_client(), 
                 workbench=mcp,
                 #tools=[get_today_date, get_time], #tools can't be used with a workbench
-                reflect_on_tool_use=True,
+                reflect_on_tool_use=False,
                 model_context=shared_context
             )
 
@@ -115,6 +115,7 @@ class McpAgentStrategy(BaseAgentStrategy):
             return None
 
         
+    
         self.selector_func = custom_selector_func
         
         self.agents = [main_assistant, chat_closure]
