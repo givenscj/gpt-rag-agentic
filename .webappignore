@@ -1,0 +1,5 @@
+.azure
+.venv
+.env
+scripts
+docs

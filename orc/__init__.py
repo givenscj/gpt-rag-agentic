@@ -24,17 +24,6 @@ warnings.filterwarnings(user_warning_filter, category=UserWarning)
 
 # Logging configuration
 logging.basicConfig(level=config.get_value('LOGLEVEL', 'INFO').upper(), force=True)
-logging.getLogger("azure").setLevel(config.get_value('AZURE_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("httpx").setLevel(config.get_value('HTTPX_LOGLEVEL', 'ERROR').upper())
-logging.getLogger("httpcore").setLevel(config.get_value('HTTPCORE_LOGLEVEL', 'ERROR').upper())
-logging.getLogger("openai._base_client").setLevel(config.get_value('OPENAI_BASE_CLIENT_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("urllib3").setLevel(config.get_value('URLLIB3_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("urllib3.connectionpool").setLevel(config.get_value('URLLIB3_CONNECTIONPOOL_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("openai").setLevel(config.get_value('OPENAI_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("autogen_core").setLevel(config.get_value('AUTOGEN_CORE_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("autogen_core.events").setLevel(config.get_value('AUTOGEN_EVENTS_LOGLEVEL', 'WARNING').upper())
-logging.getLogger("uvicorn.error").propagate = True
-logging.getLogger("uvicorn.access").propagate = True
 
 # Create the Function App with the desired auth level.
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
@@ -54,8 +43,18 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
     access_token = data.get("access_token", None)
     
     if question:
-        orchestrator = RequestResponseOrchestrator(conversation_id, OrchestratorConfig(), client_principal, access_token)
-        result = await orchestrator.answer(question)
+        try:
+            orchestrator = RequestResponseOrchestrator(conversation_id, OrchestratorConfig(), client_principal, access_token)
+            result = await orchestrator.answer(question)
+        except Exception as e:
+            logging.error(f"Error processing request: {e}")
+
+            if isinstance(e, ExceptionGroup):
+                logging.error(f"Exception details: {e.exceptions[0]} - {str(e)}")
+                return func.HttpResponse(body=json.dumps({"error": str(e.exceptions[1])}), status_code=500)
+                
+            return func.HttpResponse(body=json.dumps({"error": str(e)}), status_code=500)
+        
         return func.HttpResponse(body=json.dumps(result))
     else:
         return func.HttpResponse(body={"error": "no question found in json input"}, status_code=400)

@@ -1,7 +1,7 @@
 import os
 import logging
-from azure.identity import DefaultAzureCredential
-from azure.identity.aio import DefaultAzureCredential as AioDefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ChainedTokenCredential, ManagedIdentityCredential, AzureCliCredential
+from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential, ChainedTokenCredential as AsyncChainedTokenCredential, ManagedIdentityCredential as AsyncManagedIdentityCredential, AzureCliCredential as AsyncAzureCliCredential
 from azure.appconfiguration.provider import (
     AzureAppConfigurationKeyVaultOptions,
     load
@@ -12,6 +12,7 @@ from tenacity import retry, wait_random_exponential, stop_after_attempt, RetryEr
 class Configuration:
 
     credential = None
+    aiocredential = None
 
     def __init__(self):
 
@@ -20,34 +21,27 @@ class Configuration:
         except Exception as e:
             raise e
         
-        self.credential = DefaultAzureCredential(
-            additionally_allowed_tenants=self.tenant_id,
-            exclude_environment_credential=True, 
-            exclude_managed_identity_credential=False,
-            exclude_cli_credential=False,
-            exclude_powershell_credential=True,
-            exclude_shared_token_cache_credential=True,
-            exclude_developer_cli_credential=True,
-            exclude_interactive_browser_credential=True
+        try:
+            self.client_id = os.environ.get('AZURE_CLIENT_ID', "*")
+        except Exception as e:
+            raise e
+        
+        self.credential = ChainedTokenCredential(
+                ManagedIdentityCredential(client_id=self.client_id),
+                AzureCliCredential()
             )
-
-        self.aio_credential = AioDefaultAzureCredential(
-            additionally_allowed_tenants=self.tenant_id,
-            exclude_environment_credential=True, 
-            exclude_managed_identity_credential=False,
-            exclude_cli_credential=False,
-            exclude_powershell_credential=True,
-            exclude_shared_token_cache_credential=True,
-            exclude_developer_cli_credential=True,
-            exclude_interactive_browser_credential=True
+        
+        self.aiocredential = AsyncChainedTokenCredential(
+                AsyncManagedIdentityCredential(client_id=self.client_id),
+                AsyncAzureCliCredential()
             )
 
         try:
             app_config_uri = os.environ['APP_CONFIGURATION_URI']
             self.config = load(endpoint=app_config_uri, credential=self.credential,key_vault_options=AzureAppConfigurationKeyVaultOptions(credential=self.credential))
         except Exception as e:
+            logging.log("error", f"Unable to connect to Azure App Configuration. Please check APP_CONFIGURATION_URI setting. {e}")
             try:
-                logging.info("Unable to connect to Azure App Configuration using URI. Attempting to connect using connection string. {e}")
                 connection_string = os.environ["AZURE_APPCONFIG_CONNECTION_STRING"]
                 # Connect to Azure App Configuration using a connection string.
                 self.config = load(connection_string=connection_string, key_vault_options=AzureAppConfigurationKeyVaultOptions(credential=self.credential))
@@ -56,7 +50,7 @@ class Configuration:
 
     # Connect to Azure App Configuration.
 
-    def get_value(self, key: str, default: str = None) -> str:
+    def get_value(self, key: str, default: str = None, allow_none: bool = False) -> str:
         
         if key is None:
             raise Exception('The key parameter is required for get_value().')
@@ -81,7 +75,7 @@ class Configuration:
         if value is not None:
             return value
         else:
-            if default is not None:
+            if default is not None or allow_none is True:
                 return default
             
             raise Exception(f'The configuration variable {key} not found.')

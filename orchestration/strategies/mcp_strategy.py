@@ -3,7 +3,7 @@ from typing import Annotated
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_core.tools import FunctionTool
-from autogen_ext.tools.mcp import McpWorkbench, StdioServerParams, SseServerParams
+from autogen_ext.tools.mcp import McpWorkbench, StdioServerParams, SseServerParams, McpServerParams
 
 from tools import get_time, get_today_date
 from tools import vector_index_retrieve
@@ -49,17 +49,34 @@ class McpAgentStrategy(BaseAgentStrategy):
         mcp_server_url = self.config.get_value("AZURE_MCP_SERVER_URL", default="http://localhost:5000")
         mcp_server_timeout = self.config.get_value("AZURE_MCP_SERVER_TIMEOUT", default=30)
         mcp_server_api_key = self.config.get_value("AZURE_MCP_SERVER_APIKEY", default=None)
+        mcp_server_transport = self.config.get_value("AZURE_MCP_SERVER_TRANSPORT", default="sse")
 
         headers={"Content-Type": "application/json"}
 
         if mcp_server_api_key is not None and mcp_server_api_key != "":
             headers['Authorization'] = f"Bearer {mcp_server_api_key}"
 
-        server_params = SseServerParams(
-            url=mcp_server_url,
-            headers=headers,
-            timeout=mcp_server_timeout,  # Connection timeout in seconds
-        )
+        if mcp_server_transport == "stateless":
+            server_params = McpServerParams(
+                url=mcp_server_url,
+                headers=headers,
+                timeout=mcp_server_timeout,  # Connection timeout in seconds
+            )
+        elif mcp_server_transport == "stdio":
+            server_params = StdioServerParams(
+                command="npx",
+                args=[
+                    "@playwright/mcp@latest",
+                    "--headless",
+                ],
+                read_timeout_seconds=mcp_server_timeout,  # Read timeout in seconds
+            )
+        elif mcp_server_transport == "sse":
+            server_params = SseServerParams(
+                url=mcp_server_url,
+                headers=headers,
+                timeout=mcp_server_timeout,  # Connection timeout in seconds
+            )
 
         # Agents
 

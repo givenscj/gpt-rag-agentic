@@ -28,9 +28,11 @@ openai
 
 # for 0.4 
 autogen-agentchat==0.5.7
-autogen_ext==0.5.7
+#autogen_ext==0.5.7
+sse_starlette
+httpx_sse
 
-aiohttp==3.11.18
+aiohttp==3.12.0
 # asyncio==3.4.3
 
 # NL2SQL dependencies
@@ -48,5 +50,5 @@ protobuf==5.29.4
 rpds-py
 
 pydantic==2.11.4
-semantic-kernel==1.30.0
-mcp[cli]
+semantic-kernel==1.31.0
+#mcp[cli]==1.8.1
