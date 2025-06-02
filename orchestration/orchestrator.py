@@ -9,7 +9,7 @@ from datetime import datetime
 
 from .constants import Strategy, OutputFormat, OutputMode
 from autogen_agentchat.teams import SelectorGroupChat
-from connectors import CosmosDBClient
+from connectors import CosmosDBClient, AsyncCosmosDBClient
 from .agent_strategy_factory import AgentStrategyFactory
 from configuration import Configuration
 config = Configuration()
@@ -170,7 +170,7 @@ class BaseOrchestrator(ABC):
     ):
         self.client_principal = client_principal
         self.access_token = access_token
-        self.cosmosdb =  CosmosDBClient()
+        self.cosmosdb = AsyncCosmosDBClient()
         self.conversation_manager = ConversationManager(self.cosmosdb, config, client_principal, conversation_id)
         self.conversation_id = self.conversation_manager.conversation_id
         self.short_id = self.conversation_id[:8]

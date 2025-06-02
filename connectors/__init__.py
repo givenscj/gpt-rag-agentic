@@ -1,6 +1,6 @@
 # connectors/__init__.py
 from .aoai import AzureOpenAIClient
-from .cosmosdb import CosmosDBClient
+from .cosmosdb import CosmosDBClient, AsyncCosmosDBClient
 from .sqldbs import SQLDBClient
 from .fabric import SQLEndpointClient
 from .fabric import SemanticModelClient

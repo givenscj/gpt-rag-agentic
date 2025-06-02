@@ -2,7 +2,7 @@ import logging
 import os
 import re
 
-from connectors import AzureOpenAIClient
+from connectors import AzureOpenAIClient, CosmosDBClient, AsyncCosmosDBClient
 from azure.identity import get_bearer_token_provider
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
@@ -13,6 +13,7 @@ from ..constants import OutputFormat, OutputMode
 from autogen_agentchat.agents import AssistantAgent
 from configuration import Configuration
 config = Configuration()
+cosmos = CosmosDBClient(config)
 
 # Agent response types
 class ChatGroupResponse(BaseModel):
@@ -37,6 +38,8 @@ class BaseAgentStrategy:
         self.context_buffer_size = int(config.get_value('CONTEXT_BUFFER_SIZE', 30))
         self.text_only=False 
         self.optimize_for_audio=False
+
+        self.prompt_source = config.get_value('PROMPT_SOURCE', 'file')  # 'file' or 'cosmos'
 
     async def create_agents(self, history, client_principal=None, access_token=None, text_only=False, optimize_for_audio=False): 
         """
@@ -164,6 +167,15 @@ class BaseAgentStrategy:
         return security_ids
 
     async def _read_prompt(self, prompt_name, placeholders=None):
+        
+        if self.prompt_source == 'file':
+            return await self._read_prompt_file(prompt_name, placeholders)
+        
+        elif self.prompt_source == 'cosmos':
+            return await self._read_prompt_cosmos(prompt_name, placeholders)
+        
+        
+    async def _read_prompt_file(self, prompt_name, placeholders=None):
         """
         Load and process a prompt file, applying strategy-based variants and placeholder replacements.
 
@@ -242,9 +254,33 @@ class BaseAgentStrategy:
                         f"[base_agent_strategy] Placeholder '{{{{{placeholder_name}}}}}' could not be replaced."
                     )
             return prompt
-
-
         
+    async def _read_prompt_cosmos(self, prompt_name, placeholders=None):
+ 
+        logging.info(f"[base_agent_strategy] Using cosmo prompt : {self.strategy_type.value} : {prompt_name}")
+
+        prompt_json = cosmos.get_document("prompts", f"{self.strategy_type.value}_{prompt_name}")
+        prompt = prompt_json.get("content", "")
+            
+        # Replace placeholders provided in the 'placeholders' dictionary
+        if placeholders:
+            for key, value in placeholders.items():
+                prompt = prompt.replace(f"{{{{{key}}}}}", value)
+        
+        # Find any remaining placeholders in the prompt
+        pattern = r"\{\{([^}]+)\}\}"
+        matches = re.findall(pattern, prompt)
+        
+        # Process each unmatched placeholder
+        for placeholder_name in set(matches):
+            # Skip if placeholder was already replaced
+            if placeholders and placeholder_name in placeholders:
+                continue
+            
+            placeholder_content = cosmos.get_document("prompts", f"placeholder_{placeholder_name}")
+            prompt = prompt.replace(f"{{{{{placeholder_name}}}}}", placeholder_content)
+            
+        return prompt
 
     def _prompt_dir(self):
             """
