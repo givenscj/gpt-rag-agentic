@@ -22,8 +22,22 @@ import warnings
 user_warning_filter = config.get_value('USER_WARNING_FILTER', 'ignore').lower()
 warnings.filterwarnings(user_warning_filter, category=UserWarning)
 
+level=config.get_value('LOGLEVEL', 'DEBUG').upper()
+
+#convert to logging level
+if level == 'DEBUG':    
+    level = logging.DEBUG
+elif level == 'INFO':
+    level = logging.INFO
+elif level == 'WARNING':
+    level = logging.WARNING
+elif level == 'ERROR':
+    level = logging.ERROR
+elif level == 'CRITICAL':
+    level = logging.CRITICAL
+
 # Logging configuration
-logging.basicConfig(level=config.get_value('LOGLEVEL', 'INFO').upper(), force=True)
+logging.basicConfig(level=level, force=True)
 
 # Create the Function App with the desired auth level.
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
@@ -49,10 +63,10 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         except Exception as e:
             logging.error(f"Error processing request: {e}")
 
-            if isinstance(e, ExceptionGroup):
-                logging.error(f"Exception details: {e.exceptions[0]} - {str(e)}")
-                return func.HttpResponse(body=json.dumps({"error": str(e.exceptions[1])}), status_code=500)
-                
+            while isinstance(e, Exception) and hasattr(e, 'exceptions') and e.exceptions:
+                e = e.exceptions[0]
+                logging.error(f"Exception details: {e.exceptions[0].exceptions[0]} - {str(e)}")
+    
             return func.HttpResponse(body=json.dumps({"error": str(e)}), status_code=500)
         
         return func.HttpResponse(body=json.dumps(result))
