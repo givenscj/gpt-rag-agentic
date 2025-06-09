@@ -6,8 +6,6 @@ from connectors.cosmosdb import CosmosDBClient
 from connectors.fabric import SQLEndpointClient, SemanticModelClient
 from connectors.types import SQLEndpointConfig, SemanticModelConfig, SQLDatabaseConfig
 from connectors.sqldbs import SQLDBClient
-from configuration import Configuration
-config = Configuration()
 
 def validate_sql_query(query: Annotated[str, "SQL Query"]) -> ValidateSQLQueryResult:
     """
@@ -29,7 +27,7 @@ async def execute_dax_query(datasource: Annotated[str, "Target datasource"], que
     """
     try:
         cosmosdb = CosmosDBClient()
-        datasources_container = config.get_value('DATASOURCES_CONTAINER', 'datasources')
+        datasources_container = os.environ.get('DATASOURCES_CONTAINER', 'datasources')
         datasource_config = await cosmosdb.get_document(datasources_container, datasource)
         if not datasource_config or datasource_config.get("type") != "semantic_model":
             return ExecuteQueryResult(error=f"{datasource} datasource configuration not found or invalid for Semantic Model.")
@@ -62,7 +60,7 @@ async def execute_sql_query(
     try:
         # Fetch the datasource configuration
         cosmosdb = CosmosDBClient()
-        datasources_container = config.get_value('DATASOURCES_CONTAINER', 'datasources')
+        datasources_container = os.environ.get('DATASOURCES_CONTAINER', 'datasources')
         datasource_config = await cosmosdb.get_document(datasources_container, datasource)
 
         if not datasource_config:

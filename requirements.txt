@@ -1,13 +1,11 @@
 
 # Azure Functions dependencies
 azure-functions
-
-#azurefunctions-extensions-bindings-blob
-#azurefunctions-extensions-http-fastapi
-# Obtaining azurefunctions-extensions-http-fastapi 1.0.0b4 from github to get pydantic 2.10.5+ support
-git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-base&subdirectory=azurefunctions-extensions-base
-git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-bindings-blob&subdirectory=azurefunctions-extensions-bindings-blob
-git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azurefunctions-extensions-http-fastapi&subdirectory=azurefunctions-extensions-http-fastapi
+azurefunctions-extensions-bindings-blob
+ 
+# azurefunctions-extensions-http-fastapi
+# Obtaining azurefunctions-extensions-http-fastapi 1.0.0b3 from github to get pydantic 2.10.1 support
+git+https://github.com/Azure/azure-functions-python-extensions.git@1.0.0b3#egg=azurefunctions-extensions-http-fastapi&subdirectory=azurefunctions-extensions-http-fastapi
 
 
 # Azure SDK dependencies
@@ -17,22 +15,18 @@ azure-identity
 azure-mgmt-web
 azure-mgmt-storage
 azure-storage-blob
-azure.appconfiguration
-azure.appconfiguration.provider
 
 # AI and NLP dependencies
-tiktoken==0.9.0
-openai
+tiktoken==0.7.0
+openai==1.66.3
 
 # GenAI dependencies
 
 # for 0.4 
-autogen-agentchat==0.5.7
-#autogen_ext==0.5.7
-sse_starlette
-httpx_sse
+autogen-agentchat==0.4.9.2
+autogen_ext==0.4.9.2
 
-aiohttp==3.12.0
+aiohttp==3.10.11
 # asyncio==3.4.3
 
 # NL2SQL dependencies
@@ -45,10 +39,3 @@ tenacity==9.0.0
 # For evaluation
 requests
 python-dotenv
-
-protobuf==5.29.4
-rpds-py
-
-pydantic==2.11.4
-semantic-kernel==1.31.0
-#mcp[cli]==1.8.1

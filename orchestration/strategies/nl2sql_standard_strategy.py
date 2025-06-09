@@ -16,8 +16,6 @@ from tools import (
     validate_sql_query,
     execute_sql_query,
 )
-from configuration import Configuration
-config = Configuration()
 
 # Agents Strategy Class
 
@@ -71,10 +69,10 @@ class NL2SQLStandardStrategy(NL2SQLBaseStrategy):
         )
 
         ## Chat Closure Agent
-        chat_closure = await self._create_chat_closure_agent(output_format, output_mode)
+        chat_closure = await self._create_chat_closure_agent(output_format, output_mode, response_format=None)
 
         # Group Chat Configuration
-        self.max_rounds = int(config.get_value('MAX_ROUNDS', 20))
+        self.max_rounds = int(os.getenv('MAX_ROUNDS', 20))
 
         def custom_selector_func(messages):
             """

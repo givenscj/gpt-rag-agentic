@@ -72,7 +72,7 @@ class SemanticModelClient:
             client_secret=client_secret
         )
         try:
-            token = await credential.get_token("https://analysis.windows.net/powerbi/api/.default")
+            token = await credential.get_token("https://analysis.azure.us/powerbi/api/.default")
             logging.info("[fabric] Access token acquired successfully for Semantic Model.")
             return token.token
         except Exception as e:

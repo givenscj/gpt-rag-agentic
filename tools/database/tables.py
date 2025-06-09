@@ -5,6 +5,7 @@ import asyncio
 from typing import Any, Dict, Annotated, Optional, List
 
 import aiohttp
+from azure.identity import ChainedTokenCredential, ManagedIdentityCredential, AzureCliCredential
 
 # Import Pydantic models from your types file.
 from .types import (
@@ -13,9 +14,7 @@ from .types import (
 )
 # Import the AzureOpenAIClient for generating embeddings.
 from connectors import AzureOpenAIClient
-from configuration import Configuration
 
-config = Configuration()
 
 # -----------------------------------------------------------------------------
 # Helper function to perform the Azure AI Search query using aiohttp
@@ -34,21 +33,25 @@ async def _perform_search(body: Dict[str, Any], search_index: str) -> Dict[str, 
     Raises:
         Exception: If the search query fails or an error occurs obtaining the token.
     """
-    search_service = config.get_value("AZURE_SEARCH_SERVICE")
+    search_service = os.getenv("AZURE_SEARCH_SERVICE")
     if not search_service:
         raise Exception("AZURE_SEARCH_SERVICE environment variable is not set.")
-    search_api_version = config.get_value("AZURE_SEARCH_API_VERSION", "2024-07-01")
+    search_api_version = os.getenv("AZURE_SEARCH_API_VERSION", "2024-07-01")
 
     # Build the search endpoint URL.
     search_endpoint = (
-        f"https://{search_service}.search.windows.net/indexes/{search_index}/docs/search"
+        f"https://{search_service}.search.azure.us/indexes/{search_index}/docs/search"
         f"?api-version={search_api_version}"
     )
 
     # Obtain an access token for the search service.
     try:
-        azure_search_scope = "https://search.azure.com/.default"
-        token = config.credential.get_token(azure_search_scope).token
+        credential = ChainedTokenCredential(
+            ManagedIdentityCredential(),
+            AzureCliCredential()
+        )
+        azure_search_scope = "https://search.azure.us/.default"
+        token = credential.get_token(azure_search_scope).token
     except Exception as e:
         logging.error("Error obtaining Azure Search token.", exc_info=True)
         raise Exception("Failed to obtain Azure Search token.") from e
@@ -216,11 +219,11 @@ async def tables_retrieval(
                                If an error occurs, the 'error' field is populated.
     """
     # Read search configuration from environment variables.
-    search_index = config.get_value("NL2SQL_TABLES_INDEX", "nl2sql-tables")
-    search_approach = config.get_value("AZURE_SEARCH_APPROACH", "hybrid")
+    search_index = os.getenv("NL2SQL_TABLES_INDEX", "nl2sql-tables")
+    search_approach = os.getenv("AZURE_SEARCH_APPROACH", "hybrid")
     search_top_k = 10
-    use_semantic = config.get_value("AZURE_SEARCH_USE_SEMANTIC", "false").lower() == "true"
-    semantic_search_config = config.get_value("AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG", "my-semantic-config")
+    use_semantic = os.getenv("AZURE_SEARCH_USE_SEMANTIC", "false").lower() == "true"
+    semantic_search_config = os.getenv("AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG", "my-semantic-config")
 
     search_query = input  # The optimized query string.
     search_results: List[TableRetrievalItem] = []

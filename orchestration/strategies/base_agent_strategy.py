@@ -2,8 +2,8 @@ import logging
 import os
 import re
 
-from connectors import AzureOpenAIClient, CosmosDBClient, AsyncCosmosDBClient
-from azure.identity import get_bearer_token_provider
+from connectors import AzureOpenAIClient
+from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential, get_bearer_token_provider
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
 from autogen_core.model_context import BufferedChatCompletionContext
@@ -11,9 +11,6 @@ from autogen_core.models import SystemMessage
 from pydantic import BaseModel
 from ..constants import OutputFormat, OutputMode
 from autogen_agentchat.agents import AssistantAgent
-from configuration import Configuration
-config = Configuration()
-cosmos = CosmosDBClient(config)
 
 # Agent response types
 class ChatGroupResponse(BaseModel):
@@ -23,23 +20,21 @@ class ChatGroupResponse(BaseModel):
 class BaseAgentStrategy:
     def __init__(self):
         # Azure OpenAI model client configuration
-        self.aoai_resource = config.get_value('AZURE_OPENAI_RESOURCE', 'openai')
-        self.chat_deployment = config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
-        self.model = config.get_value('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
-        self.api_version = config.get_value('AZURE_OPENAI_API_VERSION', '2024-10-21')
-        self.max_tokens = int(config.get_value('AZURE_OPENAI_MAX_TOKENS', 1000))
-        self.temperature = float(config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7))
+        self.aoai_resource = os.environ.get('AZURE_OPENAI_RESOURCE', 'openai')
+        self.chat_deployment = os.environ.get('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
+        self.model = os.environ.get('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
+        self.api_version = os.environ.get('AZURE_OPENAI_API_VERSION', '2024-10-21')
+        self.max_tokens = int(os.environ.get('AZURE_OPENAI_MAX_TOKENS', 1000))
+        self.temperature = float(os.environ.get('AZURE_OPENAI_TEMPERATURE', 0.7))
 
         # Autogen agent configuration (base to be overridden)
         self.agents = []
         self.terminate_message = "TERMINATE"
-        self.max_rounds = int(config.get_value('MAX_ROUNDS', 8))
+        self.max_rounds = int(os.getenv('MAX_ROUNDS', 8))
         self.selector_func = None
-        self.context_buffer_size = int(config.get_value('CONTEXT_BUFFER_SIZE', 30))
+        self.context_buffer_size = int(os.getenv('CONTEXT_BUFFER_SIZE', 30))
         self.text_only=False 
         self.optimize_for_audio=False
-
-        self.prompt_source = config.get_value('PROMPT_SOURCE', 'file')  # 'file' or 'cosmos'
 
     async def create_agents(self, history, client_principal=None, access_token=None, text_only=False, optimize_for_audio=False): 
         """
@@ -84,19 +79,20 @@ class BaseAgentStrategy:
         interaction with Azure OpenAI services.
         """
         token_provider = get_bearer_token_provider(
-            config.credential,
-            "https://cognitiveservices.azure.com/.default"
+            ChainedTokenCredential(
+                ManagedIdentityCredential(),
+                AzureCliCredential()
+            ), "https://cognitiveservices.azure.us/.default"
         )
         return AzureOpenAIChatCompletionClient(
             azure_deployment=self.chat_deployment,
             model=self.model,
-            azure_endpoint=f"https://{self.aoai_resource}.openai.azure.com",
+            azure_endpoint=f"https://{self.aoai_resource}.openai.azure.us",
             azure_ad_token_provider=token_provider,
             api_version=self.api_version,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            response_format=response_format,
-            #parallel_tool_calls=False
+            response_format=response_format
         )
 
     def _get_termination_condition(self):
@@ -167,15 +163,6 @@ class BaseAgentStrategy:
         return security_ids
 
     async def _read_prompt(self, prompt_name, placeholders=None):
-        
-        if self.prompt_source == 'file':
-            return await self._read_prompt_file(prompt_name, placeholders)
-        
-        elif self.prompt_source == 'cosmos':
-            return await self._read_prompt_cosmos(prompt_name, placeholders)
-        
-        
-    async def _read_prompt_file(self, prompt_name, placeholders=None):
         """
         Load and process a prompt file, applying strategy-based variants and placeholder replacements.
 
@@ -254,33 +241,9 @@ class BaseAgentStrategy:
                         f"[base_agent_strategy] Placeholder '{{{{{placeholder_name}}}}}' could not be replaced."
                     )
             return prompt
-        
-    async def _read_prompt_cosmos(self, prompt_name, placeholders=None):
- 
-        logging.info(f"[base_agent_strategy] Using cosmo prompt : {self.strategy_type.value} : {prompt_name}")
 
-        prompt_json = cosmos.get_document("prompts", f"{self.strategy_type.value}_{prompt_name}")
-        prompt = prompt_json.get("content", "")
-            
-        # Replace placeholders provided in the 'placeholders' dictionary
-        if placeholders:
-            for key, value in placeholders.items():
-                prompt = prompt.replace(f"{{{{{key}}}}}", value)
+
         
-        # Find any remaining placeholders in the prompt
-        pattern = r"\{\{([^}]+)\}\}"
-        matches = re.findall(pattern, prompt)
-        
-        # Process each unmatched placeholder
-        for placeholder_name in set(matches):
-            # Skip if placeholder was already replaced
-            if placeholders and placeholder_name in placeholders:
-                continue
-            
-            placeholder_content = cosmos.get_document("prompts", f"placeholder_{placeholder_name}")
-            prompt = prompt.replace(f"{{{{{placeholder_name}}}}}", placeholder_content)
-            
-        return prompt
 
     def _prompt_dir(self):
             """
@@ -307,7 +270,7 @@ class BaseAgentStrategy:
         return BufferedChatCompletionContext(buffer_size=self.context_buffer_size, initial_messages=initial_messages)
     
 
-    async def _create_chat_closure_agent(self, output_format, output_mode):
+    async def _create_chat_closure_agent(self, output_format, output_mode, response_format=ChatGroupResponse):
         """
         Create a chat closure agent based on the specified output format and mode.
 
@@ -334,6 +297,6 @@ class BaseAgentStrategy:
         return AssistantAgent(
             name="chat_closure",
             system_message=await self._read_prompt(prompt_name),
-            model_client=self._get_model_client() if output_mode == OutputMode.STREAMING else self._get_model_client(response_format=ChatGroupResponse),
+            model_client=self._get_model_client() if output_mode == OutputMode.STREAMING else self._get_model_client(response_format=response_format),
             model_client_stream=True if output_mode == OutputMode.STREAMING else False
         )

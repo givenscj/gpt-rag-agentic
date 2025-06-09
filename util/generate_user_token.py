@@ -34,7 +34,7 @@ def start_local_server(port, result_container):
 
 def get_user_token(client_id, client_secret, tenant_id):
     authority = f"https://login.microsoftonline.com/{tenant_id}"
-    scopes = ["https://analysis.windows.net/powerbi/api/Dataset.Read.All"]
+    scopes = ["https://analysis.azure.us/powerbi/api/Dataset.Read.All"]
     redirect_uri = "http://localhost:8000"
     app = msal.ConfidentialClientApplication(client_id, authority=authority, client_credential=client_secret)
 

@@ -4,13 +4,10 @@ import tiktoken
 import time
 from openai import AzureOpenAI, RateLimitError
 from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential, get_bearer_token_provider
-from configuration import Configuration
 
 MAX_RETRIES = 10 # Maximum number of retries for rate limit errors
 MAX_EMBEDDINGS_MODEL_INPUT_TOKENS = 8192
 MAX_GPT_MODEL_INPUT_TOKENS = 128000 # this is gpt4o max input, if using gpt35turbo use 16385
-
-config = Configuration()
 
 class AzureOpenAIClient:
     """
@@ -24,13 +21,15 @@ class AzureOpenAIClient:
         Initializes the AzureOpenAI client.
 
         """        
-        self.openai_service_name = config.get_value('AZURE_OPENAI_RESOURCE')
-        self.openai_api_base = f"https://{self.openai_service_name}.openai.azure.com"
-        self.openai_api_version = config.get_value('AZURE_OPENAI_API_VERSION')
+        self.openai_service_name = os.getenv('AZURE_OPENAI_RESOURCE')
+        self.openai_api_base = f"https://{self.openai_service_name}.openai.azure.us"
+        self.openai_api_version = os.getenv('AZURE_OPENAI_API_VERSION')
 
         token_provider = get_bearer_token_provider(
-            config.credential, 
-            "https://cognitiveservices.azure.com/.default"
+            ChainedTokenCredential(
+                ManagedIdentityCredential(),
+                AzureCliCredential()
+            ), "https://cognitiveservices.azure.us/.default"
         )
 
         self.client = AzureOpenAI(
@@ -43,7 +42,7 @@ class AzureOpenAIClient:
     def get_completion(self, prompt, max_tokens=800, retry_after=True):
         one_liner_prompt = prompt.replace('\n', ' ')
         logging.info(f"[aoai] Getting completion for prompt: {one_liner_prompt[:100]}")
-        openai_deployment = config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT')
+        openai_deployment = os.getenv('AZURE_OPENAI_CHATGPT_DEPLOYMENT')
 
         # truncate prompt if needed
         prompt = self._truncate_input(prompt, MAX_GPT_MODEL_INPUT_TOKENS)
@@ -57,8 +56,8 @@ class AzureOpenAIClient:
             response = self.client.chat.completions.create(
                 messages=input_messages,
                 model=openai_deployment,
-                temperature=float(config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7)),
-                top_p=float(config.get_value('AZURE_OPENAI_TOP_P', 0.95)),
+                temperature=float(os.environ.get('AZURE_OPENAI_TEMPERATURE', 0.7)),
+                top_p=float(os.environ.get('AZURE_OPENAI_TOP_P', 0.95)),
                 max_tokens=max_tokens
             )
 
@@ -84,7 +83,7 @@ class AzureOpenAIClient:
     def get_embeddings(self, text, retry_after=True):
         one_liner_text = text.replace('\n', ' ')
         logging.info(f"[aoai] Getting embeddings for text: {one_liner_text[:100]}")        
-        openai_deployment = config.get_value('AZURE_OPENAI_EMBEDDING_DEPLOYMENT')
+        openai_deployment = os.getenv('AZURE_OPENAI_EMBEDDING_DEPLOYMENT')
 
         # summarize in case it is larger than the maximum input tokens
         num_tokens = GptTokenEstimator().estimate_tokens(text)

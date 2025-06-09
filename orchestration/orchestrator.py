@@ -9,10 +9,9 @@ from datetime import datetime
 
 from .constants import Strategy, OutputFormat, OutputMode
 from autogen_agentchat.teams import SelectorGroupChat
-from connectors import CosmosDBClient, AsyncCosmosDBClient
+from connectors import CosmosDBClient
 from .agent_strategy_factory import AgentStrategyFactory
-from configuration import Configuration
-config = Configuration()
+
 
 # ---------- Configuration & Dependency Classes ----------
 
@@ -23,9 +22,9 @@ class OrchestratorConfig:
         storage_account: str = None,
         orchestration_strategy: Strategy = None,
     ):
-        self.conversation_container = conversation_container or config.get_value('CONVERSATION_CONTAINER', 'conversations')
-        self.storage_account = storage_account or config.get_value('AZURE_STORAGE_ACCOUNT', 'your_storage_account')
-        strategy_from_env = config.get_value('AUTOGEN_ORCHESTRATION_STRATEGY', 'classic_rag').replace('-', '_')
+        self.conversation_container = conversation_container or os.environ.get('CONVERSATION_CONTAINER', 'conversations')
+        self.storage_account = storage_account or os.environ.get('AZURE_STORAGE_ACCOUNT', 'your_storage_account')
+        strategy_from_env = os.getenv('AUTOGEN_ORCHESTRATION_STRATEGY', 'classic_rag').replace('-', '_')
         self.orchestration_strategy = (orchestration_strategy or Strategy(strategy_from_env))
 
 
@@ -170,7 +169,7 @@ class BaseOrchestrator(ABC):
     ):
         self.client_principal = client_principal
         self.access_token = access_token
-        self.cosmosdb = AsyncCosmosDBClient()
+        self.cosmosdb =  CosmosDBClient()
         self.conversation_manager = ConversationManager(self.cosmosdb, config, client_principal, conversation_id)
         self.conversation_id = self.conversation_manager.conversation_id
         self.short_id = self.conversation_id[:8]

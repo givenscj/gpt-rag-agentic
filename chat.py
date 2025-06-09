@@ -36,7 +36,7 @@ import requests
 from dotenv import load_dotenv
 import logging
 import logging.config
-from orchestration import Orchestrator
+from orchestration import RequestResponseOrchestrator, OrchestratorConfig
 import asyncio
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -139,7 +139,6 @@ def send_question_to_python(question, conversation_id):
     Returns:
         dict: The response from the orchestrator.
     """
-    # Use default client principal information
     client_principal = {
         'id': '00000000-0000-0000-0000-000000000123',
         'name': 'anonymous',
@@ -150,7 +149,7 @@ def send_question_to_python(question, conversation_id):
     # Call orchestrator
     if question:
         try:
-            orchestrator = Orchestrator(conversation_id, client_principal)
+            orchestrator = RequestResponseOrchestrator(conversation_id, OrchestratorConfig(), client_principal)
             result = asyncio.run(orchestrator.answer(question))
             if not isinstance(result, dict):
                 logger.error("Expected result to be a dictionary.")

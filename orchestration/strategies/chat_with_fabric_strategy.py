@@ -11,8 +11,6 @@ from tools import ExecuteQueryResult
 from .base_agent_strategy import BaseAgentStrategy
 from ..constants import Strategy
 
-from configuration import Configuration
-
 from tools import (
     get_time,
     get_today_date,
@@ -26,8 +24,6 @@ from tools import (
     validate_sql_query,
     execute_sql_query,
 )
-
-config = Configuration()
 
 ## Agent Response Types
 
@@ -169,7 +165,7 @@ class ChatWithFabricStrategy(BaseAgentStrategy):
         )
         
         # Group Chat Configuration
-        self.max_rounds = int(config.get_value('MAX_ROUNDS', 40))
+        self.max_rounds = int(os.getenv('MAX_ROUNDS', 40))
 
         def custom_selector_func(messages):
             """
