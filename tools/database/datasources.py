@@ -1,8 +1,10 @@
 from .types import DataSourcesList, DataSourceItem
 import os
 from connectors import CosmosDBClient
+
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 async def get_all_datasources_info() -> DataSourcesList:
     """

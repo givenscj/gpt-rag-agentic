@@ -6,7 +6,7 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_core.tools import FunctionTool
 
 from .nl2sql_base_agent_strategy import NL2SQLBaseStrategy
-from ..constants import Strategy
+from .constants import Strategy
 from tools import (
     get_time,
     get_today_date,
@@ -16,8 +16,10 @@ from tools import (
     validate_sql_query,
     execute_sql_query,
 )
+
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 # Agents Strategy Class
 

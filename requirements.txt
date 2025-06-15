@@ -11,8 +11,7 @@ git+https://github.com/givenscj/azure-functions-python-extensions.git#egg=azuref
 
 
 # Azure SDK dependencies
-azure-keyvault-secrets==4.8.0
-azure-cosmos==4.5.1
+azure-keyvault-secrets
 azure-identity
 azure-mgmt-web
 azure-mgmt-storage
@@ -20,8 +19,14 @@ azure-storage-blob
 azure.appconfiguration
 azure.appconfiguration.provider
 
+#Vector stores
+azure-cosmos
+psycopg2
+pgvector
+elasticsearch
+
 # AI and NLP dependencies
-tiktoken==0.9.0
+tiktoken
 openai
 
 # GenAI dependencies

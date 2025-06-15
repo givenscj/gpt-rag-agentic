@@ -9,9 +9,7 @@ from autogen_agentchat.messages import TextMessage
 from tools import ExecuteQueryResult
 
 from .base_agent_strategy import BaseAgentStrategy
-from ..constants import Strategy
-
-from configuration import Configuration
+from .constants import Strategy
 
 from tools import (
     get_time,
@@ -27,7 +25,9 @@ from tools import (
     execute_sql_query,
 )
 
-config = Configuration()
+from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 ## Agent Response Types
 

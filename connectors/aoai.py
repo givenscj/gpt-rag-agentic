@@ -4,13 +4,14 @@ import tiktoken
 import time
 from openai import AzureOpenAI, RateLimitError
 from azure.identity import ManagedIdentityCredential, AzureCliCredential, ChainedTokenCredential, get_bearer_token_provider
-from configuration import Configuration
 
 MAX_RETRIES = 10 # Maximum number of retries for rate limit errors
 MAX_EMBEDDINGS_MODEL_INPUT_TOKENS = 8192
 MAX_GPT_MODEL_INPUT_TOKENS = 128000 # this is gpt4o max input, if using gpt35turbo use 16385
 
-config = Configuration()
+from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 class AzureOpenAIClient:
     """

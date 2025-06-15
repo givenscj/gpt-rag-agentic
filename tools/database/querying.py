@@ -6,8 +6,10 @@ from connectors.cosmosdb import CosmosDBClient
 from connectors.fabric import SQLEndpointClient, SemanticModelClient
 from connectors.types import SQLEndpointConfig, SemanticModelConfig, SQLDatabaseConfig
 from connectors.sqldbs import SQLDBClient
+
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 def validate_sql_query(query: Annotated[str, "SQL Query"]) -> ValidateSQLQueryResult:
     """

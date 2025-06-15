@@ -9,11 +9,13 @@ from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermi
 from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.models import SystemMessage
 from pydantic import BaseModel
-from ..constants import OutputFormat, OutputMode
+from .constants import OutputFormat, OutputMode
 from autogen_agentchat.agents import AssistantAgent
+from connectors import CosmosDBClient
+
 from configuration import Configuration
-config = Configuration()
-cosmos = CosmosDBClient(config)
+from dependencies import get_config
+config :Configuration = get_config()
 
 # Agent response types
 class ChatGroupResponse(BaseModel):
@@ -21,25 +23,29 @@ class ChatGroupResponse(BaseModel):
     reasoning: str
 
 class BaseAgentStrategy:
-    def __init__(self):
+    def __init__(self, config: Configuration = None):
+        
+        self.config = config or get_config()
         # Azure OpenAI model client configuration
-        self.aoai_resource = config.get_value('AZURE_OPENAI_RESOURCE', 'openai')
-        self.chat_deployment = config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
-        self.model = config.get_value('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
-        self.api_version = config.get_value('AZURE_OPENAI_API_VERSION', '2024-10-21')
-        self.max_tokens = int(config.get_value('AZURE_OPENAI_MAX_TOKENS', 1000))
-        self.temperature = float(config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7))
+        self.aoai_resource = self.config.get_value('AZURE_OPENAI_RESOURCE', 'openai')
+        self.chat_deployment = self.config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
+        self.model = self.config.get_value('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
+        self.api_version = self.config.get_value('AZURE_OPENAI_API_VERSION', '2024-10-21')
+        self.max_tokens = self.config.get_value('AZURE_OPENAI_MAX_TOKENS', 1000, type=int)
+        self.temperature = self.config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7, type=float)
 
         # Autogen agent configuration (base to be overridden)
         self.agents = []
         self.terminate_message = "TERMINATE"
-        self.max_rounds = int(config.get_value('MAX_ROUNDS', 8))
+        self.max_rounds = self.config.get_value('MAX_ROUNDS', 8, type=int)
         self.selector_func = None
-        self.context_buffer_size = int(config.get_value('CONTEXT_BUFFER_SIZE', 30))
-        self.text_only=False 
-        self.optimize_for_audio=False
+        self.context_buffer_size = self.config.get_value('CONTEXT_BUFFER_SIZE', 30, type=int)
+        self.text_only = self.config.get_value('TEXT_ONLY', False, type=bool)
+        self.optimize_for_audio = self.config.get_value('OPTIMIZE_FOR_AUDIO', False, type=bool)
 
-        self.prompt_source = config.get_value('PROMPT_SOURCE', 'file')  # 'file' or 'cosmos'
+        self.prompt_source = self.config.get_value('PROMPT_SOURCE', 'file')  # 'file' or 'cosmos'
+
+        self.cosmos = CosmosDBClient(self.config)
 
     async def create_agents(self, history, client_principal=None, access_token=None, text_only=False, optimize_for_audio=False): 
         """
@@ -84,7 +90,7 @@ class BaseAgentStrategy:
         interaction with Azure OpenAI services.
         """
         token_provider = get_bearer_token_provider(
-            config.credential,
+            self.config.credential,
             "https://cognitiveservices.azure.com/.default"
         )
         return AzureOpenAIChatCompletionClient(
@@ -259,7 +265,7 @@ class BaseAgentStrategy:
  
         logging.info(f"[base_agent_strategy] Using cosmo prompt : {self.strategy_type.value} : {prompt_name}")
 
-        prompt_json = cosmos.get_document("prompts", f"{self.strategy_type.value}_{prompt_name}")
+        prompt_json = self.cosmos.get_document("prompts", f"{self.strategy_type.value}_{prompt_name}")
         prompt = prompt_json.get("content", "")
             
         # Replace placeholders provided in the 'placeholders' dictionary
@@ -277,7 +283,7 @@ class BaseAgentStrategy:
             if placeholders and placeholder_name in placeholders:
                 continue
             
-            placeholder_content = cosmos.get_document("prompts", f"placeholder_{placeholder_name}")
+            placeholder_content = self.cosmos.get_document("prompts", f"placeholder_{placeholder_name}")
             prompt = prompt.replace(f"{{{{{placeholder_name}}}}}", placeholder_content)
             
         return prompt

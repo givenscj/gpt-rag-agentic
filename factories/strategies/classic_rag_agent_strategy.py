@@ -1,23 +1,31 @@
 from typing import Annotated
-
+from factories.vector_stores.types import VectorIndexRetrievalResult
 
 from autogen_agentchat.agents import AssistantAgent
 from autogen_core.tools import FunctionTool
 
 from tools import get_time, get_today_date
-from tools import vector_index_retrieve
-from tools.ragindex.types import VectorIndexRetrievalResult
 
 from .base_agent_strategy import BaseAgentStrategy
-from ..constants import Strategy
+from .constants import Strategy
+from factories.vector_stores.constants import VectorStoreType
+from factories.vector_stores.vector_store import VectorStore
+from factories.vector_stores.vector_store_factory import VectorStoreFactory
 
 from autogen_agentchat.messages import ToolCallSummaryMessage
 
+from configuration import Configuration
+from dependencies import get_config
+
 class ClassicRAGAgentStrategy(BaseAgentStrategy):
 
-    def __init__(self):
+    def __init__(self, config: Configuration = None):
+        
         super().__init__()
+
+        self.config = config or get_config()
         self.strategy_type = Strategy.CLASSIC_RAG
+        self.vector_store_type = self.config.get_value("VECTOR_STORE_STRATEGY", VectorStoreType.AISEARCH.value)
 
     async def create_agents(self, history, client_principal=None, access_token=None, output_mode=None, output_format=None):
         """
@@ -42,7 +50,9 @@ class ClassicRAGAgentStrategy(BaseAgentStrategy):
         async def vector_index_retrieve_wrapper(
             input: Annotated[str, "An optimized query string based on the user's ask and conversation history, when available"]
         ) -> VectorIndexRetrievalResult:
-            return await vector_index_retrieve(input, self._generate_security_ids(client_principal))
+
+            vector_store: VectorStore = VectorStoreFactory.get_factory(self.vector_store_type)
+            return await vector_store.query_vector(search_query=input, security_ids=self._generate_security_ids(client_principal))
 
         vector_index_retrieve_tool = FunctionTool(
             vector_index_retrieve_wrapper, name="vector_index_retrieve", description="Performs a vector search using Azure AI Search to retrieve relevant sources for answering the user's query."

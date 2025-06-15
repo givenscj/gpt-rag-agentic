@@ -9,7 +9,8 @@ import aiohttp
 from .types import MeasuresList, MeasureItem
 
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 # -----------------------------------------------------------------------------
 # Helper function to perform the Azure AI Search query (analogous to tables.py)

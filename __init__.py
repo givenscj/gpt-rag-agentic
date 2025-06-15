@@ -8,3 +8,7 @@ if parent_dir not in sys.path:
 
 import mcp
 import autogen_ext
+
+from telemetry import Telemetry
+
+Telemetry.configure_basic()

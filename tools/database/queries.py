@@ -8,10 +8,10 @@ import aiohttp
 from connectors import AzureOpenAIClient
 
 from .types import QueryItem, QueriesRetrievalResult
+
 from configuration import Configuration
-
-config = Configuration()
-
+from dependencies import get_config
+config :Configuration = get_config()
 
 async def queries_retrieval(
     input: Annotated[str, "The user ask"],

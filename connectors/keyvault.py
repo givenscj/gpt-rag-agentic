@@ -5,7 +5,8 @@ from azure.keyvault.secrets.aio import SecretClient as AsyncSecretClient
 from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 ##########################################################
 # KEY VAULT 

@@ -50,8 +50,8 @@ class Configuration:
 
     # Connect to Azure App Configuration.
 
-    def get_value(self, key: str, default: str = None, allow_none: bool = False) -> str:
-        
+    def get_value(self, key: str, default: str = None, allow_none: bool = False, type: type = str) -> str:
+
         if key is None:
             raise Exception('The key parameter is required for get_value().')
 
@@ -73,6 +73,15 @@ class Configuration:
                 pass
 
         if value is not None:
+            if type is not None:
+                if type is bool:
+                    if isinstance(value, str):
+                        value = value.lower() in ['true', '1', 'yes']
+                else:
+                    try:
+                        value = type(value)
+                    except ValueError as e:
+                        raise Exception(f'Value for {key} could not be converted to {type.__name__}. Error: {e}')
             return value
         else:
             if default is not None or allow_none is True:

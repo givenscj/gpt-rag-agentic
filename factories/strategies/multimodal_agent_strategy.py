@@ -19,11 +19,15 @@ from autogen_core import CancellationToken, Image
 from autogen_core.model_context import BufferedChatCompletionContext
 from autogen_core.tools import FunctionTool
 from connectors import BlobClient
-from tools import get_time, get_today_date, multimodal_vector_index_retrieve
-from tools.ragindex.types import MultimodalVectorIndexRetrievalResult
+from tools import get_time, get_today_date
+from factories.vector_stores.types import MultimodalVectorIndexRetrievalResult
+from factories.vector_stores.constants import VectorStoreType
+from factories.vector_stores.vector_store_factory import VectorStoreFactory
 
-from ..constants import Strategy
+from .constants import Strategy
 from .base_agent_strategy import BaseAgentStrategy
+from dependencies import get_config
+from configuration import Configuration
 
 class MultimodalMessageCreator(BaseChatAgent):
     """
@@ -33,7 +37,7 @@ class MultimodalMessageCreator(BaseChatAgent):
     This agent simply scans the conversation for the tool's result, parses 
     text + image URLs, and returns a MultiModalMessage.
     """
-    def __init__(self, name: str, system_prompt: str, model_context: BufferedChatCompletionContext):
+    def __init__(self, name: str, system_prompt: str, model_context: BufferedChatCompletionContext, config :Configuration = None):
         super().__init__(
             name=name,
             description="An agent that creates `MultiModalMessage` objects from the results of `vector_index_retrieve_wrapper`, executed by an `AssistantAgent` called `retrieval_agent`."
@@ -41,6 +45,10 @@ class MultimodalMessageCreator(BaseChatAgent):
         self._last_multimodal_result = None
         self.system_prompt = system_prompt + "\n\n"
         self._model_context = model_context
+
+        self.config = config or get_config()
+
+        self.vector_store_type = self.config.get_value("VECTOR_STORE_STRATEGY", VectorStoreType.AISEARCH.value)
 
     @property
     def produced_message_types(self):
@@ -170,9 +178,11 @@ class MultimodalAgentStrategy(BaseAgentStrategy):
         # Wrapper Functions for Tools
 
         async def vector_index_retrieve_wrapper(
-            input: Annotated[str, "An optimized query string based on the user's ask and conversation history, when available"]
+            input: Annotated[str, "An optimized query string based on the user's ask and conversation history, when available"],
+            security_ids: str = 'anonymous'
         ) -> MultimodalVectorIndexRetrievalResult:
-            return await multimodal_vector_index_retrieve(input, self._generate_security_ids(client_principal))
+            factory = VectorStoreFactory.get_factory(self.vector_store_type)
+            return factory.multimodal_vector_index_retrieve(input, security_ids)
 
         vector_index_retrieve_tool = FunctionTool(
             vector_index_retrieve_wrapper, name="vector_index_retrieve", description="Performs a vector search using Azure AI Search fetching text and related images get relevant sources for answering the user's query."

@@ -6,7 +6,9 @@ from connectors.keyvault import get_secret, generate_valid_secret_name
 from connectors.types import SQLDatabaseConfig
 from configuration import Configuration
 
-config = Configuration()
+from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 class SQLDBClient:
     """

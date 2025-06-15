@@ -1,16 +1,10 @@
-from typing import Annotated
-
-
 from autogen_agentchat.agents import AssistantAgent
-from autogen_core.tools import FunctionTool
 from autogen_ext.tools.mcp import McpWorkbench, StdioServerParams, SseServerParams, McpServerParams
 
 from tools import get_time, get_today_date
-from tools import vector_index_retrieve
-from tools.ragindex.types import VectorIndexRetrievalResult
 
 from .base_agent_strategy import BaseAgentStrategy
-from ..constants import Strategy
+from .constants import Strategy
 
 from autogen_agentchat.messages import ToolCallSummaryMessage
 
@@ -20,13 +14,15 @@ from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 
 from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 class McpAgentStrategy(BaseAgentStrategy):
 
     def __init__(self):
         super().__init__()
         self.strategy_type = Strategy.MCP
-        self.config = Configuration()
+        self.config = config
 
     async def create_agents(self, history, client_principal=None, access_token=None, output_mode=None, output_format=None):
         """

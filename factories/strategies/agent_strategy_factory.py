@@ -1,16 +1,17 @@
 # Typical RAG Strategies
-from .strategies.classic_rag_agent_strategy import ClassicRAGAgentStrategy
-from .strategies.multimodal_agent_strategy import MultimodalAgentStrategy
+from .classic_rag_agent_strategy import ClassicRAGAgentStrategy
+from .multimodal_agent_strategy import MultimodalAgentStrategy
 # NL2SQL Strategies
-from .strategies.nl2sql_standard_strategy import NL2SQLStandardStrategy
-from .strategies.nl2sql_fewshot_strategy import NL2SQLFewshotStrategy
+from .nl2sql_standard_strategy import NL2SQLStandardStrategy
+from .nl2sql_fewshot_strategy import NL2SQLFewshotStrategy
 # Other Strategies
-from .strategies.chat_with_fabric_strategy import ChatWithFabricStrategy
-from .strategies.mcp_strategy import McpAgentStrategy
+from .chat_with_fabric_strategy import ChatWithFabricStrategy
+from .mcp_strategy import McpAgentStrategy
 
 from .constants import Strategy
 
 class AgentStrategyFactory:
+    
     @staticmethod
     def get_strategy(strategy_type: Strategy):
         if strategy_type == Strategy.CLASSIC_RAG:

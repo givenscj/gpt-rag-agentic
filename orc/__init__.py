@@ -8,36 +8,9 @@ import azure.functions as func
 from orchestration import RequestResponseOrchestrator, OrchestratorConfig
 from configuration import Configuration
 
-config = Configuration()
-
-# User Warning configuration
-import warnings
-# Available options for USER_WARNING_FILTER:
-#   ignore  - never show the warning
-#   always  - always show the warning
-#   error   - turn the warning into an exception
-#   once    - show the warning only once
-#   module  - show the warning only once per module
-#   default - default Python behavior
-user_warning_filter = config.get_value('USER_WARNING_FILTER', 'ignore').lower()
-warnings.filterwarnings(user_warning_filter, category=UserWarning)
-
-level=config.get_value('LOGLEVEL', 'DEBUG').upper()
-
-#convert to logging level
-if level == 'DEBUG':    
-    level = logging.DEBUG
-elif level == 'INFO':
-    level = logging.INFO
-elif level == 'WARNING':
-    level = logging.WARNING
-elif level == 'ERROR':
-    level = logging.ERROR
-elif level == 'CRITICAL':
-    level = logging.CRITICAL
-
-# Logging configuration
-logging.basicConfig(level=level, force=True)
+from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 # Create the Function App with the desired auth level.
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)

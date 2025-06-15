@@ -13,9 +13,10 @@ from .types import (
 )
 # Import the AzureOpenAIClient for generating embeddings.
 from connectors import AzureOpenAIClient
-from configuration import Configuration
 
-config = Configuration()
+from configuration import Configuration
+from dependencies import get_config
+config :Configuration = get_config()
 
 # -----------------------------------------------------------------------------
 # Helper function to perform the Azure AI Search query using aiohttp

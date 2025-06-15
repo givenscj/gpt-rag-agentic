@@ -6,7 +6,8 @@ import os
 import time
 
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 class BlobClient:
     def __init__(self, blob_url, credential=None):

@@ -7,12 +7,15 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from .constants import Strategy, OutputFormat, OutputMode
+from factories.strategies.constants import Strategy, OutputFormat, OutputMode
+from factories.strategies.agent_strategy_factory import AgentStrategyFactory
+
 from autogen_agentchat.teams import SelectorGroupChat
 from connectors import CosmosDBClient, AsyncCosmosDBClient
-from .agent_strategy_factory import AgentStrategyFactory
+
 from configuration import Configuration
-config = Configuration()
+from dependencies import get_config
+config :Configuration = get_config()
 
 # ---------- Configuration & Dependency Classes ----------
 
