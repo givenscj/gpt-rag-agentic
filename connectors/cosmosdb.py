@@ -26,21 +26,36 @@ class CosmosDBClient:
         self.db_client = CosmosClient(self.db_uri, credential=self.config.credential)
         self.db = self.db_client.get_database_client(database=self.db_name)
 
-# 'conversations'
-# self.conversation_id
-#     conversation
-#     logging.info(f"[base_orchestrator] customer sent an inexistent conversation_id, saving new conversation_id")        
-#     conversation = await container.create_item(body={"id": self.conversation_id})
-# self.conversation_data = self.conversation.get('conversation_data', 
-#                             {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 'interactions': []})
-# self.history = self.conversation_data.get('history', [])
+    def get_database(self, db_name: str):
+        """
+        Gets a database client for the specified database name.
+        """
+        try:
+            database = self.db_client.get_database_client(database=db_name)
+            logging.info(f"[cosmosdb] Database {db_name} retrieved.")
+            return database
+        except Exception as e:
+            logging.error(f"[cosmosdb] Error retrieving database {db_name}: {e}")
+            return None
+        
+    def get_container(self, container_name: str):
+        """
+        Gets a container client for the specified container name.
+        """
+        try:
+            container = self.db.get_container_client(container_name)
+            logging.info(f"[cosmosdb] Container {container_name} retrieved.")
+            return container
+        except Exception as e:
+            logging.error(f"[cosmosdb] Error retrieving container {container_name}: {e}")
+            return None
 
     async def list_documents(self, container_name) -> list:
         """
         Lists all documents from the given container.
         """
         
-        container = db.get_container_client(container_name)
+        container = self.db.get_container_client(container_name)
 
         # Correct usage without the outdated argument
         query = "SELECT * FROM c"

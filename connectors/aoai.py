@@ -20,17 +20,18 @@ class AzureOpenAIClient:
     Delays between retries start at 0.5 seconds, doubling up to 8 seconds.
     If a rate limit error occurs after retries, the client will retry once more after the retry-after-ms header duration (if the header is present).
     """
-    def __init__(self):
+    def __init__(self, config: Configuration = None):
         """
         Initializes the AzureOpenAI client.
 
         """        
-        self.openai_service_name = config.get_value('AZURE_OPENAI_RESOURCE')
+        self.config = config
+        self.openai_service_name = self.config.get_value('AZURE_OPENAI_RESOURCE')
         self.openai_api_base = f"https://{self.openai_service_name}.openai.azure.com"
-        self.openai_api_version = config.get_value('AZURE_OPENAI_API_VERSION')
+        self.openai_api_version = self.config.get_value('AZURE_OPENAI_API_VERSION')
 
         token_provider = get_bearer_token_provider(
-            config.credential, 
+            self.config.credential, 
             "https://cognitiveservices.azure.com/.default"
         )
 

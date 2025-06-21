@@ -1,13 +1,19 @@
 import re
 import json
 import logging
+
 from urllib.parse import urlparse
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 from .types import VectorIndexRetrievalResult, MultimodalVectorIndexRetrievalResult, DataPointsResult
 
 class VectorStore:
+
+    supports_batch_migration = True
+    max_batch_size = 1000
+    max_workers = 10
+
     def __init__(self):
         # Initialize the vector store
         pass
@@ -16,8 +22,22 @@ class VectorStore:
         # Create the vector store
         pass
 
-    async def add_vector(self, vector: list):
+    async def add_vector(self, vector: Dict, fields: Optional[List[str]] = None):
         # Add a vector to the store
+        pass
+
+    async def add_vectors(self, vector: list):
+        # Add a vector to the store
+        pass
+
+    async def get_fields(self):
+        # Add a vector to the store
+        pass
+
+    async def get_item(self, item_id: str) -> Dict:
+        pass
+
+    async def get_items(self, batch_size = 100) -> List[Dict]:
         pass
 
     async def query_vector(self, query: list):
@@ -104,12 +124,41 @@ class VectorStore:
         return DataPointsResult(data_points=data_points)
 
 class VectorStoreMigration:
-    def __init__(self, source_store: VectorStore, target_store: VectorStore):
+
+    source_store: VectorStore
+    target_store: VectorStore
+    batch_size: int = 100
+    max_workers: int = 10
+
+    def __init__(self, source_store: VectorStore, target_store: VectorStore, batch_size: int = 100, max_workers: int = 10):
         self.source_store = source_store
         self.target_store = target_store
+        self.batch_size = batch_size
+        self.max_workers = max_workers
 
     async def migrate(self):
         # Migrate vectors from source to target store
-        vectors = await self.source_store.query_vector([])
-        for vector in vectors:
-            await self.target_store.add_vector(vector)
+        fields = await self.target_store.get_fields()
+        items = await self.source_store.get_items()
+        for item in items:
+            try:
+                await self.target_store.add_vector(item, fields=fields)
+            except Exception as e:
+                error_message = f"Error migrating item {item.get('id', 'unknown')}: {str(e)}"
+                logging.error(f"[vector_store_migration] {error_message}", exc_info=True)
+                continue
+
+        logging.info(f"[vector_store_migration] Migrated {len(items)} items from {self.source_store} to {self.target_store}")        
+
+    async def migrate_batch(self, batch_size: Optional[int] = None):
+        # Migrate vectors from source to target store
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        while True:
+            vectors = await self.source_store.get_items(batch_size=batch_size)
+            
+            if not vectors:
+                break
+            
+            await self.target_store.add_vectors(vectors)
