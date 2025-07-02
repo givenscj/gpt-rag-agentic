@@ -38,7 +38,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
 
             while isinstance(e, Exception) and hasattr(e, 'exceptions') and e.exceptions:
                 e = e.exceptions[0]
-                logging.error(f"Exception details: {e.exceptions[0].exceptions[0]} - {str(e)}")
+                logging.error(f"Exception details: {str(e)}")
     
             return func.HttpResponse(body=json.dumps({"error": str(e)}), status_code=500)
         

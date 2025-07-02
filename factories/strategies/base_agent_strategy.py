@@ -31,7 +31,7 @@ class BaseAgentStrategy:
         self.chat_deployment = self.config.get_value('AZURE_OPENAI_CHATGPT_DEPLOYMENT', 'chat')
         self.model = self.config.get_value('AZURE_OPENAI_CHATGPT_MODEL', 'gpt-4o')
         self.api_version = self.config.get_value('AZURE_OPENAI_API_VERSION', '2024-10-21')
-        self.max_tokens = self.config.get_value('AZURE_OPENAI_MAX_TOKENS', 1000, type=int)
+        self.max_tokens = self.config.get_value('AZURE_OPENAI_MAX_TOKENS', 2000, type=int)
         self.temperature = self.config.get_value('AZURE_OPENAI_TEMPERATURE', 0.7, type=float)
 
         # Autogen agent configuration (base to be overridden)

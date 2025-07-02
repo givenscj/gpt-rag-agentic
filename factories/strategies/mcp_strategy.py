@@ -43,14 +43,14 @@ class McpAgentStrategy(BaseAgentStrategy):
 
         # Wrapper Functions for Tools
         mcp_server_url = self.config.get_value("AZURE_MCP_SERVER_URL", default="http://localhost:5000")
-        mcp_server_timeout = self.config.get_value("AZURE_MCP_SERVER_TIMEOUT", default=30)
+        mcp_server_timeout = self.config.get_value("AZURE_MCP_SERVER_TIMEOUT", default=600)
         mcp_server_api_key = self.config.get_value("AZURE_MCP_SERVER_APIKEY", default=None)
         mcp_server_transport = self.config.get_value("AZURE_MCP_SERVER_TRANSPORT", default="sse")
 
         headers={"Content-Type": "application/json"}
 
         if mcp_server_api_key is not None and mcp_server_api_key != "":
-            headers['Authorization'] = f"Bearer {mcp_server_api_key}"
+            headers['X-API-KEY'] = f"{mcp_server_api_key}"
 
         if mcp_server_transport == "stateless":
             server_params = McpServerParams(
